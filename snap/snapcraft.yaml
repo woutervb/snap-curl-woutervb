@@ -1,0 +1,59 @@
+name: curl
+base: core18
+adopt-info: curl
+summary: CLI tool for transferring data with URL syntax (HTTP, HTTPS, etc)
+description: |
+    A command line tool and library for transferring data with URL syntax, 
+    supporting HTTP, HTTPS, FTP, FTPS, GOPHER, TFTP, SCP, SFTP, SMB, TELNET, 
+    DICT, LDAP, LDAPS, FILE, IMAP, SMTP, POP3, RTSP and RTMP. 
+    libcurl offers a myriad of powerful features
+grade: stable # must be 'stable' to release into candidate/stable channels
+confinement: strict # use 'strict' once you have the right plugs and slots
+
+apps: 
+  curl:
+    command: bin/curl
+    plugs:
+      - network
+
+parts:
+  curl:
+    plugin: autotools
+    source: https://github.com/curl/curl.git
+    build-packages:
+      - libssl-dev
+      - libssh-dev
+      - zlib1g-dev
+      - libbrotli-dev
+      - libidn11-dev
+      - librtmp-dev
+      - libldap2-dev
+    stage-packages:
+      - libbrotli1
+      - libidn2-0
+      - libldap-2.4-2
+      - librtmp1
+      - libsasl2-2
+      - libssl1.0.0
+      - libwind0-heimdal
+      - libasn1-8-heimdal
+      - libhcrypto4-heimdal
+      - libheimbase1-heimdal
+      - libheimntlm0-heimdal
+      - libhx509-5-heimdal
+      - libroken18-heimdal
+      - libkrb5-26-heimdal
+    override-pull: |
+      set -eu
+      snapcraftctl pull
+      last_committed_tag="$(git describe --tags --abbrev=0)"
+      last_committed_tag_ver="$(echo ${last_committed_tag} | sed -e 's/curl-//' -e 's/_/./g')"
+      last_released_tag="$(snap info $SNAPCRAFT_PROJECT_NAME | awk '$1 == "latest/beta:" { print $2 }')"
+      # If the latest tag from the upstream project has not been released to
+      # beta, build that tag instead of master.
+      if [ "${last_committed_tag_ver}" != "${last_released_tag}" ]; then
+        git fetch
+        git checkout "${last_committed_tag}"
+      fi
+      ./maketgz ${last_committed_tag_ver} only
+      snapcraftctl set-version ${last_committed_tag_ver}

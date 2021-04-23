@@ -1,4 +1,4 @@
-name: curl
+name: curl-woutervb
 base: core18
 adopt-info: curl
 summary: CLI tool for transferring data with URL syntax (HTTP, HTTPS, etc)
